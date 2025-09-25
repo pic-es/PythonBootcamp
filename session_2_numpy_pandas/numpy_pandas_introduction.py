@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.17.3
+#       jupytext_version: 1.16.2
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -58,7 +58,6 @@ div.text_cell_render {
 #   - [Indexing and slicing](#indexing-and-slicing)
 #   - [Algebra, Analysis and Statistics](#algebra)
 # - [pandas](#pandas)
-#   - [Why pandas?](#why-pandas)
 #   - [What is pandas?](#what-is-pandas)
 #   - [Selection and slicing](#selection-and-slicing)
 #   - [Merging and grouping](#merging-and-grouping)
@@ -140,11 +139,22 @@ print("NumPy array addition time:", end - start, "seconds")
 #   - This is why slicing is fast: it doesn’t copy data, it just tells NumPy how to step through memory to access the elements you want.
 
 # %%
+### Simple Example of "broadcasting"
 import numpy as np
-a = np.ones([2, 3, 4])
-b = np.random.random([2, 3, 1])
+# A simple 2D array
+a = np.array([[1, 2, 3],
+              [4, 5, 6]])   # shape (2, 3)
+# A column vector
+b = np.array([[10],
+              [20]])        # shape (2, 1)
+
+# Broadcasting happens here
 c = a + b
-a.shape, b.shape, c.shape, c
+
+print("a.shape:", a.shape)
+print("b.shape:", b.shape)
+print("c.shape:", c.shape)
+print("c:\n", c)
 
 # %% [markdown]
 # <a id='data-types-dtypes'></a>
@@ -220,32 +230,34 @@ print("Original array after modifying slice:", arr)
 # ## pandas
 
 # %% [markdown]
-# <a id='why-pandas'></a>
-# ### Why pandas?
-# - **Tabular Data & Labels:**
-#   - **Series** (1D)
-#   - **DataFrame** (2D).
-# - Where NumPy is like a powerful array engine, **pandas adds labels, mixed data types, and data manipulation tools**.
-
-# %% [markdown]
 # ### What is pandas?
 # - As a conceptual introduction, a DataFrame can be thought of as a dictionary of NumPy arrays (*).
-# - **Series:** 1D labeled array.
-# - **DataFrame:** 2D labeled table (rows + columns).
-# - Built on top of NumPy arrays.
+# - Where NumPy is like a powerful array engine, **pandas adds labels, mixed data types, and data manipulation tools**.
+# - **Tabular Data & Labels:**
+#   - **Series:** 1D labeled array.
+#   - **DataFrame:** 2D labeled table (rows + columns).
+#     - Built on top of NumPy arrays.
 #
 # (*) Internally, pandas is more than a dictionary of arrays: it has indices, metadata, and type handling.
 
 # %% [markdown]
 # <a id='selection-and-slicing'></a>
 # ### [Selection and slicing](https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#indexing-view-versus-copy)
+#
 # - Difference from NumPy:
 #   - NumPy slicing returns a **view**; modifying it affects the original array.
-#   - Pandas slicing via `.iloc` (integer-location) or `.loc` (label-location) **may return a copy or a view**, depending on the operation. There is no guaranteed rule. To be safe, use `.copy()` if you want a separate object (*).
+#   - Pandas slicing via `.iloc` (integer-location) or `.loc` (label-location) is **less predictable**: it may return a view or a copy, depending on the operation and version. To be safe, use `.copy()` if you need a fully independent object.
 #
-# - .iloc vs .loc:
-#   - `.iloc[start:end]` → integer positions, end **exclusive** (like NumPy)
-#   - `.loc[start:end]` → label-based, end **inclusive** (different from NumPy)
+# > **View vs Copy in pandas:**  
+# > - A **view** is a new object that *points to the same data in memory* as the original. Changes made through the view may affect the original.  
+# > - A **copy** is a new object with the data stored in a *separate location in memory*. Changes to the copy do **not** affect the original.  
+# >
+# > In NumPy, slicing **always** gives a view.  
+# > In pandas (before 3.0), slicing **may give a view or a copy**. With Copy-on-Write enabled (or in pandas 3.0+), slicing behaves safely like copies.
+#
+# - `.iloc` vs `.loc`:
+#   - `.iloc[start:end]` → integer positions, end **exclusive** (like NumPy).
+#   - `.loc[start:end]` → label-based, end **inclusive** (different from NumPy).
 #
 # - The basics of indexing are as follows:
 #
@@ -257,14 +269,9 @@ print("Original array after modifying slice:", arr)
 # | Slice rows                     | df[5:10]         | DataFrame     |
 # | Select rows by boolean vector  | df[bool_vec]     | DataFrame     |
 #
-#
-# (*) Note from the official documentation:
-#
-# Before 3.0: slices may be views or copies; modifying them can be risky → SettingWithCopyWarning.
-#
-# After 3.0 (or with CoW enabled now): slices behave safely — they are effectively copies on write, so modifying them does not affect the original DataFrame.
 
 # %%
+#### Example of slicing in pandas
 import pandas as pd
 print(pd.__version__)
 # Example DataFrame
@@ -309,12 +316,12 @@ import numpy as np
 
 s = 10_000
 
-loc = np.random.random(size=s)
+random_number = np.random.random(size=s)
 scale = np.random.choice([1, 2, 3], size=s)
 lognormal = np.random.lognormal(mean=loc, sigma=scale, size=s)
 
 df = pd.DataFrame({
-    'loc': loc,
+    'random_number': random_number,
     'scale': scale,
     'lognormal': lognormal
 })
@@ -346,7 +353,7 @@ df.groupby('scale').mean()
 #   - Load only needed columns.
 # - Alternatives:
 #   - **Dask DataFrame:** scales pandas to big data.
-#   - **Polars:** modern, fast, Arrow-based library.
+#   - **[Polars](https://docs.pola.rs/):** modern, fast, Arrow-based library.
 
 # %% [markdown]
 # <a id='some-more-functions'></a>
