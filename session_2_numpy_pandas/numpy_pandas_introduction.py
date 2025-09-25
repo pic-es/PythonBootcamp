@@ -12,11 +12,10 @@
 #     language: python
 #     name: python3
 # ---
-
 # %% [markdown]
 # # Official master's degree in High Energy Physics, Astrophysics and Cosmology
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## <img width=400 src="https://upload.wikimedia.org/wikipedia/commons/1/1a/NumPy_logo.svg" alt="Numpy"/>
 
 # %% [markdown]
@@ -41,11 +40,11 @@ div.text_cell_render {
 </style>
 """))
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # ## This is a short introductory session, focus on *concepts*
-#
+# 
 # ### What problems each library solves and how – rather than memorizing syntax. 
-#
+# 
 # #### (You can / should use LLMs or documentation for exact functions!)
 
 # %% [markdown]
@@ -67,7 +66,7 @@ div.text_cell_render {
 
 # %% [markdown]
 # # Introducing NumPy and Pandas
-#
+# 
 # * NumPy and pandas are **essential building blocks** for almost all data-related work in Python
 # * NumPy provides fast, compact N-dimensional arrays and mathematical operations on them
 # * pandas builds on NumPy to offer labeled, tabular data structures (Series and DataFrames)
@@ -192,7 +191,7 @@ print("After adding 10 (overflow!):", y)
 # - **Slicing returns a view, not a copy** (slicing does not make a new array) → changes propagate back to the original.
 #   - This means modifying the slice also modifies the original array.
 # - Boolean (very powerfull tool to select certain elements that fullfill a certain condition) and fancy indexing allow complex selections (`a[a>0]`). 
-#
+# 
 # > **Tip:** Slicing can be tricky! For example, selecting a subarray in reverse order:
 # > 
 # > ```python
@@ -216,7 +215,7 @@ slice_arr[0] = 99
 print("Modified slice:", slice_arr)
 print("Original array after modifying slice:", arr)
 
-# %% [markdown] jp-MarkdownHeadingCollapsed=true
+# %% [markdown]
 # <a id='algebra'></a>
 # ### Algebra, Analysis and Statistics
 # - NumPy provides efficient linear algebra (mostly wrapping [LAPACK](http://www.netlib.org/lapack/)): dot products, matrix multiplications, eigenvalues.
@@ -237,30 +236,30 @@ print("Original array after modifying slice:", arr)
 #   - **Series:** 1D labeled array.
 #   - **DataFrame:** 2D labeled table (rows + columns).
 #     - Built on top of NumPy arrays.
-#
+# 
 # (*) Internally, pandas is more than a dictionary of arrays: it has indices, metadata, and type handling.
 
 # %% [markdown]
 # <a id='selection-and-slicing'></a>
 # ### [Selection and slicing](https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#indexing-view-versus-copy)
-#
+# 
 # - Difference from NumPy:
 #   - NumPy slicing returns a **view**; modifying it affects the original array.
 #   - Pandas slicing via `.iloc` (integer-location) or `.loc` (label-location) is **less predictable**: it may return a view or a copy, depending on the operation and version. To be safe, use `.copy()` if you need a fully independent object.
-#
+# 
 # > **View vs Copy in pandas:**  
 # > - A **view** is a new object that *points to the same data in memory* as the original. Changes made through the view may affect the original.  
 # > - A **copy** is a new object with the data stored in a *separate location in memory*. Changes to the copy do **not** affect the original.  
 # >
 # > In NumPy, slicing **always** gives a view.  
 # > In pandas (before 3.0), slicing **may give a view or a copy**. With Copy-on-Write enabled (or in pandas 3.0+), slicing behaves safely like copies.
-#
+# 
 # - `.iloc` vs `.loc`:
 #   - `.iloc[start:end]` → integer positions, end **exclusive** (like NumPy).
 #   - `.loc[start:end]` → label-based, end **inclusive** (different from NumPy).
-#
+# 
 # - The basics of indexing are as follows:
-#
+# 
 # | Operation                      | Syntax           | Result        |
 # |--------------------------------|------------------|---------------|
 # | Select column                  | df[column label] | Series        |
@@ -268,7 +267,7 @@ print("Original array after modifying slice:", arr)
 # | Select row by integer location | df.iloc[pos]     | Series        |
 # | Slice rows                     | df[5:10]         | DataFrame     |
 # | Select rows by boolean vector  | df[bool_vec]     | DataFrame     |
-#
+# 
 
 # %%
 #### Example of slicing in pandas
@@ -301,13 +300,13 @@ print("Original DataFrame remains unchanged:\n", df)
 # ### Merging and Grouping
 # - **Concatenation:** stack DataFrames by rows/columns.
 # - **Merge/Join:** SQL-style joins on keys.
-#
+# 
 # ```
 # pd.concat([df1, df4], axis=1, join='outer')
 # ```
-#
+# 
 # ![](static/merging_concat_axis1.png)
-#
+# 
 # - **GroupBy:** split-apply-combine for aggregation.
 
 # %%
@@ -318,7 +317,7 @@ s = 10_000
 
 random_number = np.random.random(size=s)
 scale = np.random.choice([1, 2, 3], size=s)
-lognormal = np.random.lognormal(mean=loc, sigma=scale, size=s)
+lognormal = np.random.lognormal(mean=random_number, sigma=scale, size=s)
 
 df = pd.DataFrame({
     'random_number': random_number,
@@ -328,10 +327,39 @@ df = pd.DataFrame({
 df.head(5)
 
 # %%
-df.groupby('scale').count()
+df.groupby('random_number').count()
 
 # %%
 df.groupby('scale').mean()
+
+# %% [markdown]
+# <a id='quick-visualization'></a>
+# ### Quick Visualization with `.plot`
+# 
+# 
+# - Pandas integrates basic plotting via the `.plot()` method, built on Matplotlib.
+# - Useful for **quick exploration** of Series or DataFrames.
+
+# %%
+### Example: Series plot
+s = pd.Series([1, 3, 2, 4, 5], index=["a","b","c","d","e"])
+s.plot(kind="line", title="Simple Series Plot")
+
+# %%
+### Example: Grouped DataFrame plot
+df = pd.DataFrame({
+'Category': ['A','A','B','B','C','C'],
+'Value': [10,15,10,20,5,15]
+})
+
+grouped = df.groupby('Category')['Value'].sum()
+grouped.plot(kind="bar", title="Value by Category")
+
+# %% [markdown]
+# 
+# 
+# - Supported plot kinds: `line`, `bar`, `hist`, `box`, etc.
+# - Great for exploration, but for publication-quality graphics use dedicated libraries (Matplotlib, Seaborn, etc.).
 
 # %% [markdown]
 # <a id='inputoutput'></a>
@@ -342,7 +370,7 @@ df.groupby('scale').mean()
 #     - one solution: [Table](https://docs.astropy.org/en/stable/io/unified_table_fits.html) method from astropy
 # - Always inspect results: `.head()`, `.info()`, `.dtypes`.
 #   - Even more: DataFrame *plot* method
-#
+# 
 # (*) Note: we strongly recommend to use PARQUET files
 
 # %% [markdown]
@@ -367,6 +395,7 @@ df.groupby('scale').mean()
 #     - [drop missing values (dropna)](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.dropna.html)
 #     - [fill the missing values with other values (fillna)](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.fillna.html)
 #     - [replace values with different values (replace)](https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.replace.html)
-#
+# 
 
-# %%
+
+
