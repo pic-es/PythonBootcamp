@@ -18,17 +18,11 @@
 #
 # ![Matplotlib](http://upload.wikimedia.org/wikipedia/en/5/56/Matplotlib_logo.svg)
 
-# <a id=setup></a>
 # # Notebook Setup (run me first!)
 
 # First, we apply a "magic command" to make plots appear "inline" inside the notebook
 
-# +
-# matplotlib inline plotting
 # %matplotlib inline
-
-# There's also a backend for interactive exploration
-# #%matplotlib widget
 
 # +
 import math
@@ -50,21 +44,15 @@ plt.rcParams['lines.linewidth'] = 2
 # Set the path to the git repository, it will be used later on to fetch data
 
 # if you cd'd to the repo folder before launching the jupyter lab server this should be fine
-path_to_the_repo = os.getcwd() 
+#path_to_the_repo = os.getcwd() 
 # Otherwise you'll have to set it manually
-#path_to_the_repo = "/path/to/the/git/repository"
+path_to_the_repo = "/home/torradeflot/Projects/PythonBootcamp"
 
-# # Auxiliary data
-#
-# ## Spain power generation data 
+# # Auxiliary data: Spain power generation data 
 #
 # Data from Red Eléctrica, retrieved from the public [REData API] (https://www.ree.es/es/apidatos).
-#
-# See [this notebook](../resources/PowerSources.ipynb) for the details
 
-# ### Daily data 2014-2023
-#
-# in kWh
+# Daily (raw) data 2014-2023 in kWh
 
 daily_csv = os.path.join(path_to_the_repo, 'resources', 'power_sources_daily_2014_2023.csv')
 df_daily = pd.read_csv(daily_csv, index_col=0)
@@ -73,9 +61,7 @@ df_daily.shape
 
 df_daily.head(5)
 
-# ### Monthly data 2014-2023
-#
-# in kwH
+# Compute monthly aggregates in kwH
 
 df_monthly = df_daily.groupby(['year', 'month'], as_index=False).sum().drop('day', axis=1)
 df_monthly['date'] = pd.to_datetime(
@@ -84,7 +70,7 @@ df_monthly['date'] = pd.to_datetime(
 
 df_monthly.head(5)
 
-# ### Renewable vs non-Renewable
+# Identify renewable vs non-renewable sources
 
 renewable = [
     'Hydro',
@@ -108,13 +94,143 @@ non_renewable = [
     'NonRenewableWaste'
 ]
 
-# <a id=line_plots></a>
-# # A simple example
+# # Examples
+# ## Simple example
 
 plt.plot(
     df_monthly.date, # X axis
     df_monthly['SolarPhotovoltaic'] # Y axis
+);
+
+# ## Full example
+
+# <img src="resources/matplotlib_figure_anatomy.png" width="50%"></img>
+
+# +
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
+# 1. Create some sample plot data
+x = np.linspace(0, 10, 50)
+y = np.sin(x)
+
+# 2. Load the heart image (make sure 'heart.png' exists in your directory)
+try:
+    img = mpimg.imread('resources/heart.png')
+except FileNotFoundError:
+    print("Error: heart.png not found. Please provide a heart image file.")
+
+# 3. Create a figure and axes
+fig, ax = plt.subplots()
+
+# 4. Plot the existing data
+ax.plot(x, y, label='sin(x)')
+
+# 5. Get the current x and y axis limits
+# This step is crucial to prevent Matplotlib from automatically scaling the axes
+current_xlim = ax.get_xlim()
+current_ylim = ax.get_ylim()
+
+# 6. Set the coordinates for the image placement
+# For example, let's place the image in the top-right corner of the plot
+# The extent is specified in data coordinates (x_min, x_max, y_min, y_max)
+image_xmin = 8.0
+image_xmax = 9.5
+image_ymin = 0.5
+image_ymax = 1.0
+
+# 7. Add the image to the plot using the extent parameter
+ax.imshow(img, extent=[image_xmin, image_xmax, image_ymin, image_ymax])
+
+# 8. Restore the original axis limits
+# This prevents the plot from zooming out to include the full image bounds
+ax.set_xlim(current_xlim)
+ax.set_ylim(current_ylim)
+
+# 9. Optional: Add a legend, title, etc.
+ax.set_title("Heart Image Placed on a Plot")
+ax.set_xlabel("X-axis")
+ax.set_ylabel("Y-axis")
+ax.legend()
+
+plt.show()
+
+# +
+from scipy.optimize import curve_fit
+import matplotlib.dates as mdates
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+
+# Load the PNG file as a NumPy array
+img = mpimg.imread('resources/heart.png')
+
+plt.plot(
+    df_monthly.date, df_monthly['SolarPhotovoltaic'],
+    color='tab:blue', label='Solar Photovoltaic'
 )
+
+plt.plot(
+    df_monthly.date, df_monthly['Coal'], color='tab:orange',
+    linestyle='--', marker='o', label='Coal'
+)
+
+# Annotate coal production drop
+plt.axvline(np.datetime64('2019-03-13'), ymin=0.01, ymax=0.99, color='tab:green')
+plt.annotate(
+    'Bye bye coal', [np.datetime64('2019-03-01'), 5.5e6],
+    xytext=[np.datetime64('2016-09-01'), 6e6], arrowprops={'arrowstyle':'->', 'color': 'tab:green', 'linewidth': 2},
+    color='tab:green', fontweight='bold', fontsize=10
+)
+
+# Fitting an exponential to the photovoltaic production
+def f(x, a, b, c):
+    return np.exp(a*x + b) + c
+y = df_monthly['SolarPhotovoltaic']
+x = np.arange(len(y))
+params, covariance_matrix = curve_fit(f, x, y)
+
+xi = np.arange(len(y) + 12)
+yi = df_monthly.date.tolist()
+yi += [np.datetime64(f'{y}-{m:02.0f}-01') for y in (2024,) for m in range(1, 13) ]
+plt.plot(yi, f(xi, *params), color='tab:red')
+
+plt.annotate(
+    'Exponential growth!!\n$f(x)=e^{{{0:.3f}x+{1:.3f}}} + {2:.3f}$'.format(*params),
+    [np.datetime64('2023-01-01'), 2.8e6],
+    xytext=[np.datetime64('2019-07-01'), 4e6], arrowprops={'arrowstyle':'->', 'color': 'tab:red', 'linewidth': 2},
+    color='tab:red', fontsize=10, fontweight='bold'
+)
+#ax = plt.gca()
+#current_xlim = ax.get_xlim()
+#current_ylim = ax.get_ylim()
+plt.imshow(
+    img, extent=[
+        mdates.date2num(np.datetime64('2024-08-01')),
+        mdates.date2num(np.datetime64('2025-02-01')), 4.6e6, 5.2e6],
+    aspect='auto',
+    zorder=40
+)
+#ax.set_xlim(current_xlim)
+#ax.set_ylim(current_ylim)
+
+# Ticks and grid
+plt.yticks(np.arange(7)*1e6, minor=False)
+plt.yticks((np.arange(7) + 0.5)*1e6, labels=[f'{s + 0.5:.1f}' for s in range(7)], minor=True, fontsize=9)
+plt.xticks(np.arange('2014', '2026', dtype='datetime64[Y]'), minor=False, fontsize=12)
+ax = plt.gca()
+year_formatter = mdates.DateFormatter('%Y')
+ax.xaxis.set_major_formatter(year_formatter)
+plt.xticks([np.datetime64(f'{i}-07-01')for i in range(2014, 2026)], minor=True)
+plt.grid(which='major', color='grey', linestyle='-')
+plt.grid(which='minor', color='lightgrey', linestyle='--')
+
+# Labels and legend
+plt.xlabel('date')
+plt.ylabel('energy <kWh>')
+plt.legend()
+plt.title('Energy production by source 2013-2024')
+# -
 
 # <a id=different_styles></a>
 # # Styling your plots
@@ -131,8 +247,6 @@ plt.plot(
     'go'
 )
 # plt.plot(..., color='green', marker='o', linestyle='');   # same thing!
-
-# <img src="resources/matplotlib_figure_anatomy.png"></img>
 
 months = range(1, 13)
 mask_2023 = df_monthly.year == 2023
