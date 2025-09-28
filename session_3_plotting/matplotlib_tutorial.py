@@ -14,7 +14,7 @@
 #     name: python3
 # ---
 
-# # Visualisation using
+# # Visualisation using matplotlib
 #
 # ![Matplotlib](http://upload.wikimedia.org/wikipedia/en/5/56/Matplotlib_logo.svg)
 
@@ -94,6 +94,26 @@ non_renewable = [
     'NonRenewableWaste'
 ]
 
+# # Introduction: Why Matplotlib?
+#
+# When starting out with data visualization in Python, you'll encounter many libraries: Matplotlib, Seaborn, Plotly, Bokeh, and more. Why start with Matplotlib?
+#
+# * **It's the Foundation**: Most other Python plotting libraries, including Seaborn and Pandas' built-in plotting, are built on top of Matplotlib. Understanding its core concepts gives you full control and allows you to customize any plot from these higher-level libraries.
+#
+# * **Deep Integration with Python & NumPy**: Matplotlib is built to work with native Python data structures, NumPy arrays and Pandas DataFrames. Its plotting functions are optimized to handle array-like objects efficiently, making it the de facto standard for visualizing numerical data from scientific computing and data analysis workflows.
+#
+# * **Low-Level Control**: Matplotlib provides granular, object-oriented control over every element of a plot. This is a double-edged sword: it can be more verbose for simple plots, but it's essential for creating highly customized, publication-quality figures.
+#
+# * **Versatility**: Matplotlib can create a vast range of static plots, from simple line plots to complex 3D visualizations, histograms, and contour plots.
+#
+# It also has some downsides:
+#
+# * **Steep Learning Curve and Verbose Syntax**: Matplotlib often requires multiple lines of code to achieve a simple plot, compared to higher-level libraries like Seaborn or Plotly.
+#
+# * **Old-school plotting library**. Matplotlib's default plot styles are less visually appealing than those of more modern libraries like Seaborn. Matplotlib is primarily a static plotting library. While it can be made interactive with additional backends, it lacks the native, out-of-the-box interactive features that libraries like Plotly and Bokeh offer, such as zooming, panning, and hovering over data points to see details.
+#
+# * **Not Optimized for Statistical Plots and DataFrames** Matplotlib does not have the same built-in functionality for specialized statistical visualizations as Seaborn. While Matplotlib can work with Pandas DataFrames, it may require more data manipulation to create certain plots.
+
 # # Examples
 # ## Simple example
 
@@ -105,56 +125,6 @@ plt.plot(
 # ## Full example
 
 # <img src="resources/matplotlib_figure_anatomy.png" width="50%"></img>
-
-# +
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-
-# 1. Create some sample plot data
-x = np.linspace(0, 10, 50)
-y = np.sin(x)
-
-# 2. Load the heart image (make sure 'heart.png' exists in your directory)
-try:
-    img = mpimg.imread('resources/heart.png')
-except FileNotFoundError:
-    print("Error: heart.png not found. Please provide a heart image file.")
-
-# 3. Create a figure and axes
-fig, ax = plt.subplots()
-
-# 4. Plot the existing data
-ax.plot(x, y, label='sin(x)')
-
-# 5. Get the current x and y axis limits
-# This step is crucial to prevent Matplotlib from automatically scaling the axes
-current_xlim = ax.get_xlim()
-current_ylim = ax.get_ylim()
-
-# 6. Set the coordinates for the image placement
-# For example, let's place the image in the top-right corner of the plot
-# The extent is specified in data coordinates (x_min, x_max, y_min, y_max)
-image_xmin = 8.0
-image_xmax = 9.5
-image_ymin = 0.5
-image_ymax = 1.0
-
-# 7. Add the image to the plot using the extent parameter
-ax.imshow(img, extent=[image_xmin, image_xmax, image_ymin, image_ymax])
-
-# 8. Restore the original axis limits
-# This prevents the plot from zooming out to include the full image bounds
-ax.set_xlim(current_xlim)
-ax.set_ylim(current_ylim)
-
-# 9. Optional: Add a legend, title, etc.
-ax.set_title("Heart Image Placed on a Plot")
-ax.set_xlabel("X-axis")
-ax.set_ylabel("Y-axis")
-ax.legend()
-
-plt.show()
 
 # +
 from scipy.optimize import curve_fit
@@ -201,9 +171,9 @@ plt.annotate(
     xytext=[np.datetime64('2019-07-01'), 4e6], arrowprops={'arrowstyle':'->', 'color': 'tab:red', 'linewidth': 2},
     color='tab:red', fontsize=10, fontweight='bold'
 )
-#ax = plt.gca()
-#current_xlim = ax.get_xlim()
-#current_ylim = ax.get_ylim()
+ax = plt.gca()
+current_xlim = ax.get_xlim()
+current_ylim = ax.get_ylim()
 plt.imshow(
     img, extent=[
         mdates.date2num(np.datetime64('2024-08-01')),
@@ -211,8 +181,8 @@ plt.imshow(
     aspect='auto',
     zorder=40
 )
-#ax.set_xlim(current_xlim)
-#ax.set_ylim(current_ylim)
+ax.set_xlim(current_xlim)
+ax.set_ylim(current_ylim)
 
 # Ticks and grid
 plt.yticks(np.arange(7)*1e6, minor=False)
@@ -232,191 +202,88 @@ plt.legend()
 plt.title('Energy production by source 2013-2024')
 # -
 
-# <a id=different_styles></a>
-# # Styling your plots
-
-plt.plot(
-    df_monthly.date, # X axis
-    df_monthly['SolarPhotovoltaic'], # Y axis
-    '--'
-)
-
-plt.plot(
-    df_monthly.date, # X axis
-    df_monthly['SolarPhotovoltaic'], # Y axis
-    'go'
-)
-# plt.plot(..., color='green', marker='o', linestyle='');   # same thing!
-
-months = range(1, 13)
-mask_2023 = df_monthly.year == 2023
-nuclear = df_monthly[ mask_2023]['Nuclear']
-hydro = df_monthly[ mask_2023]['Hydro']
+# ## Other kinds of plots
 
 # +
-plt.plot(months, hydro)#, c='0.2')
-plt.plot(months, nuclear)#, color='0.2')
-#plt.ylabel('Energy generation $MWh$')
+from matplotlib.patches import Circle, Ellipse, Rectangle, Polygon, RegularPolygon
+from matplotlib.collections import PatchCollection
 
-#plt.fill_between(months, hydro, nuclear, color='lightgray')
-#plt.grid(linestyle='--')
-'''
-month_names = ['January',
-          'February',
-          'March',
-          'April',
-          'May',
-          'June',
-          'July',
-          'August',
-          'September',
-          'October',
-          'November',
-          'December']
+fig, ax_list = plt.subplots(3, 3)
 
-plt.xticks(
-    months,
-    month_names,
-    rotation=45,
-    rotation_mode='anchor',
-    horizontalalignment='right',  # or ha
-    verticalalignment='top',      # or va
-);
-''';
-# -
+ax = ax_list[0, 0]
+phot_counts, phot_bins, _ = ax.hist(df_daily['SolarPhotovoltaic']/1e3)
+ax.set_title('1D Histogram')
 
-# <a id=exercise_1></a>
-# # Exercise 1
-#
-# Generate a line plot with the daily data from 2023 of 3 energy sources
-#
-# With these characteristics:
-# * All lines in grey tones
-# * different markers or line types for each line
-# * with a legend located at the 'upper left'
-#
+ax = ax_list[0, 1]
+hist_output = ax.hist2d(df_daily['SolarPhotovoltaic'], df_daily['ThermalSolar'], bins=20, cmap='gist_heat')
+ax.set_title('2D Histogram')
 
-# +
-# # %load -r 44-49 /home/torradeflot/Projects/PythonBootcamp/session_3_plotting/matplotlib_solutions.py
-# -
+ax = ax_list[0, 2]
+hist_output = ax.scatter(df_daily['SolarPhotovoltaic'], df_daily['ThermalSolar'], s=2)
+ax.set_title('Scatter')
 
-# <a id=histograms></a>
-# # Other kinds of plots
-#
-# ## 1D Histograms
+ax = ax_list[1, 0]
+ax.bar(range(len(df_monthly['SolarPhotovoltaic'])), df_monthly['SolarPhotovoltaic'])
+ax.set_title('Bar plot')
 
-# +
-# plt.hist?
-# -
-
-# The daily photovoltaic solar generation
-
-phot_counts, phot_bins, _ = plt.hist(df_daily['SolarPhotovoltaic']/1e3)
-
-#
-
-# <a id=histogram_2d></a>
-# ## 2D Histograms
-
-# +
-# plt.hist2d?
-
-# +
-x = df_daily['SolarPhotovoltaic']
-y = df_daily['ThermalSolar']
-
-hist_output = plt.hist2d(x, y, bins=50, cmap='gist_heat') # try different color maps: viridis(default), inferno, gist_heat
-#plt.hist2d(x, y, bins=50)
-# plt.hist2d(x, y, bins=[25, 50], range=[[-10, 14], [-5, 7]])
-
-plt.colorbar(label='Counts');
-# -
-
-# <a id=bar></a>
-# ## Bar plots
-
-# <a id=simple_bar></a>
-# ### Simple bar plot
-
-# +
-# plt.bar?
-
-# +
-# Reusing the data from the 1D histogram
-centers = (phot_bins[:-1] + phot_bins[1:])/2.
-plt.bar(centers, phot_counts)
-
-# Not exactly the plot we had previously
-# We have to set the width of the bar to the width of the bin
-#bin_width = phot_bins[1:] - phot_bins[:-1]
-#plt.bar(centers, phot_counts, bin_width)
-# -
-
-# <a id=multiple_bar></a>
-# ### Multiple bar plot
-
-power_labels = ['January',
- 'February',
- 'March',
- 'April',
- 'May',
- 'June',
- 'July',
- 'August',
- 'September',
- 'October',
- 'November',
- 'December']
-
+ax = ax_list[1, 1]
 year = 2023
-mask_year = df_monthly.year == year
+year_mask = df_monthly.year == year
 sources_list = ['Hydro', 'Wind', 'SolarPhotovoltaic']
 n_sources = len(sources_list)
 for ind, source in enumerate(sources_list):
-    plt.bar(np.arange(1, 13) + (ind - 1)/(n_sources + 1),
-            df_monthly[mask_year][source]/1000,
+    ax.bar(np.arange(1, 13) + (ind - 1)/(n_sources + 1),
+            df_monthly[year_mask][source]/1000,
             width=1/(n_sources + 1),
             label=source)
-plt.xticks(np.arange(1, 13), power_labels, rotation=90)
-plt.title(f'Total Power produced in Spain in {year}')
-plt.ylabel('MWh')
-plt.legend();
+ax.set_title('Multiple bar plot')
 
-# <a id=stacked_bar></a>
-# ### Stacked bar plot
 
-# +
-year = 2023
-year_mask = df_monthly.year == year
-
+ax = ax_list[1, 2]
 total_df = df_monthly.loc[year_mask, renewable + non_renewable].sum(axis=1)
 renewable_df = 100*df_monthly.loc[year_mask, renewable].sum(axis=1)/total_df
 non_renewable_df = 100*df_monthly.loc[year_mask, non_renewable].sum(axis=1)/total_df
+ax.bar(range(1, 13), renewable_df, label='Renewable')
+ax.bar(range(1, 13), non_renewable_df, bottom=renewable_df, label='Non renewable')
+ax.set_title('Stacked bar plot')
 
-plt.bar(range(1, 13), renewable_df, label='Renewable')
-plt.bar(range(1, 13), non_renewable_df, bottom=renewable_df, label='Non renewable')
 
-plt.xticks(range(1, 13), power_labels, rotation=45, ha='right')
-plt.hlines(50, 0, 13, colors='k')
-plt.legend()
+ax = ax_list[2, 0]
+dropped_columns = ['year', 'month', 'TotalGeneration', 'date']
+totals_year = (df_monthly.drop( dropped_columns, axis=1)[year_mask].sum()/1000)
+totals_year = totals_year[totals_year > 0]
+ax.pie(totals_year)
+ax.set_title('Pie chart')
 
-#plt.yticks([]);
+ax = ax_list[2, 1]
+s1 = np.random.normal(size=100)
+s2 = np.random.uniform(size=100)
+s3 = np.random.exponential(size=100)
+ax.boxplot([s1, s2, s3]);
+ax.set_title('Box plot')
+
+ax = ax_list[2, 2]
+ax.add_patch(Rectangle((1, 4), 2, 2))
+ax.add_patch(RegularPolygon((5, 5), 5, radius=1, color='C1'))
+ax.add_patch(Circle((8, 5), 1, color='C2'))
+ax.set_title('Shapes')
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 10)
+
+for ax in ax_list.flatten():
+    ax.set_yticklabels([])
+    ax.set_xticklabels([])
+
+plt.tight_layout()
+
+
+
 # -
-
-# <a id=scatter></a>
-# ## Scatter plots
-
-# +
-# plt.scatter?
-# -
-
-#plt.scatter(df_daily['Wind'], df_daily['Hydro'])
-plt.scatter(df_daily['SolarPhotovoltaic'], df_daily['ThermalSolar'])
 
 # <a id=architecture></a>
 # # matplotlib architecture
 #
-# Up to this point, we have only used the implicit *pyplot* interface. It's a MATLAB-like interface that provides convenient methods for easy plotting. But it has some drawbacks:
+# In the first plots we used the implicit *pyplot* interface. It's a MATLAB-like interface that provides convenient methods for easy plotting. But it has some drawbacks:
 #
 # * It's not very pythonic (python is OO)
 # * No idea what's happening in the background
@@ -429,10 +296,9 @@ plt.scatter(df_daily['SolarPhotovoltaic'], df_daily['ThermalSolar'])
 # The top-level matplotlib object that contains and manages all of the elements in a given graphic is called the **Figure**.
 #
 # To achieve the manipulation and rendering of this objects, matplotlib is structured in three layers:
-# * *Backend*: It's the one that actually draws the Artists on the canvas.
-# * *Artist Layer*: Are the things that have to be plotted. The figure, lines, axis, bars, ...
 # * *Scripting Layer (pyplot)*: Light scripting interface we have alredy shown
-#
+# * *Artist Layer*: Are the things that have to be plotted. The figure, lines, axis, bars, ...
+# * *Backend*: It's the one that actually draws the Artists on the canvas.
 #
 # ## Artists layer
 #
@@ -458,29 +324,6 @@ plt.scatter(df_daily['SolarPhotovoltaic'], df_daily['ThermalSolar'])
 # ### Axis
 # These are the number-line-like objects. They take care of setting the graph limits and generating the ticks (the marks on the axis) and ticklabels (strings labeling the ticks).
 
-# +
-x = np.linspace(0, 10, 100)
-y = x**2
-plt.plot(x, y, label='ay')
-plt.xlabel('lolay')
-plt.ylabel('lolá')
-plt.legend()
-
-# import the artist class from matplotlib
-from matplotlib.artist import Artist
-
-def rec_gc(art, depth=0, max_depth=8):
-    if depth < max_depth and isinstance(art, Artist):
-        # increase the depth for pretty printing
-        print("  " * depth + str(art))
-        for child in art.get_children():
-            rec_gc(child, depth+2)
-
-# Call this function on the legend artist to see what the legend is made up of
-fig = plt.gcf()
-rec_gc(fig)
-# -
-
 # ## The Object Oriented API
 
 fig = plt.figure(figsize=(16, 9))
@@ -499,6 +342,8 @@ print('Is this the same? {}\n'.format(ax == fig.get_children()[1]))
 # -
 
 # ## Backend
+#
+# A Matplotlib backend is the drawing engine that translates Python code into a plot. It's the layer that takes the abstract plot objects created by Matplotlib's scripting and artist layers and renders them to a specific output, like a screen, a file (e.g., PDF, PNG), or a Jupyter notebook. Different backends exist for different purposes; some are designed for interactive use in a graphical user interface (GUI) or a notebook, while others are optimized for generating high-quality image files.
 
 plt.get_backend()
 
@@ -507,11 +352,6 @@ plt.get_backend()
 # New cells will contain new figures.
 #
 # This behaviour may be different with other backends.
-
-new_fig = plt.gcf()
-print('old figure exits and is a {}'.format(type(fig)))
-print('new figure exits and is a {}'.format(type(new_fig)))
-print('But are they the same instance? {}'.format(fig == new_fig))
 
 # <a id=multiple_plots></a>
 # # Multiple plots in the same figure
@@ -533,40 +373,6 @@ for i in range(9):
     ax.set_yticks([])
 
 plt.tight_layout() # When doing multiple plots you should almost always use this command
-
-
-# -
-
-# <a id=shared_axis></a>
-# ## Subplots / Shared Axes
-
-# +
-def poisson(x, k):
-    return np.exp(-x)*x**k / math.factorial(k)
-
-x = np.linspace(0, 12, 40)
-y = poisson(x, 2)
-y_noise = y + np.random.normal(0, 0.01, len(y))
-z = np.linspace(0, 12, 100)
-
-gridspec = {'height_ratios': [2, 1]}
-fig, (ax1, ax2) = plt.subplots(2, sharex=True, gridspec_kw=gridspec)
-
-ax1.plot(x, y_noise, 'ko')
-ax1.plot(z, poisson(z, 2))
-ax1.set_ylim(-0.05, 0.30)
-ax1.set_ylabel('Flux')
-#ax1.set_yticks(ax1.get_yticks()[1:])    # remove bottom y-tick
-
-ax2.plot(x, y_noise - y, 'ko')
-ax2.axhline(y=0, color='black', linestyle='--', linewidth=1)
-ax2.set_xlabel('Energy')
-ax2.set_ylim(-0.03, 0.04)
-ax2.set_ylabel('Residuals')
-#ax2.set_yticks(ax2.get_yticks()[:-2])   # remove top y-tick
-
-#fig.subplots_adjust(hspace=0)
-fig.suptitle('\nFake Spectrum', fontweight='bold');
 # -
 
 # <a id=gridspec></a>
@@ -599,202 +405,6 @@ lower_right.scatter(X, Y, alpha=0.5)
 #lower_right.set_yticks([])
 #top_histogram.set_yticks(top_histogram.get_yticks()[1:])
 #side_histogram.set_xticks(side_histogram.get_xticks()[1:]);
-# -
-
-# <a id=inset_plots></a>
-# ## Inset Plots (plot inside a plot)
-
-# +
-x = np.linspace(0, 100, 101)
-
-plt.plot(x, x**2)
-plt.title("Outer Plot")
-
-# axes coordinates: (0,0) is lower left, (1,1) upper right
-plt.axes([0.2, 0.45, 0.3, 0.3])
-plt.plot(x, x**3)
-plt.title("Inner Plot");
-# -
-
-# <a id=exercise_2></a>
-# ## Exercise 2
-#
-# Generate 3 differents random samples.
-#
-# Plot them as normalized 1D histograms in a figure with 3 axes in 1 column, with shared x-axis and y-axis.
-#
-# Put the name of the distribution somewhere in the axes so it can be identified.
-#
-# There have to be no x-ticks in the top 2 axes and no vertical space between them.
-#
-# Remove y-ticks.
-
-# +
-# #%load -r 73-88 {path_to_the_repo}/matplotlib/matplotlib_solutions.py
-
-# +
-# # %load -r 73-88 /home/torradeflot/Projects/PythonMasterIFAE/matplotlib/matplotlib_solutions.py
-s1 = df_daily['Wind']
-s2 = df_daily['Nuclear']
-s3 = df_daily['Coal']
-
-bins = np.linspace(0, 400000, 101)
-
-fig, ((ax1), (ax2), (ax3)) = plt.subplots(3, 1, sharex=True, sharey=True, gridspec_kw={'hspace':0})
-ax1.hist(s1, color='0.4', bins=bins, density=True)
-ax2.hist(s2, color='0.4', bins=bins, density=True)
-ax3.hist(s3, color='0.4', bins=bins, density=True)
-
-ax1.text(0.05, 0.9,'Wind', ha='left', va='top', transform=ax1.transAxes)
-ax2.text(0.05, 0.9,'Nuclear', ha='left', va='top', transform=ax2.transAxes)
-ax3.text(0.05, 0.9,'Coal', ha='left', va='top', transform=ax3.transAxes)
-for ax in fig.get_axes():
-    ax.set_yticks([])
-# -
-
-# # Other plot types
-
-# ##  Images
-
-n_rows = 2
-n_cols = 2
-m = np.array([[n_rows*i + j for j in range(n_cols)] for i in range(n_rows)])
-plt.imshow(m)
-plt.colorbar();
-
-# +
-from matplotlib.colors import LogNorm
-
-x = np.linspace(0, 2 * np.pi, 120)
-y = np.linspace(0, 2 * np.pi, 120).reshape(-1, 1)
-
-im = plt.imshow(np.sin(x) + np.cos(y), cmap='gist_heat') #, clim=(-0.5, 0.5)) #, norm=LogNorm())
-plt.colorbar();
-# -
-
-# ## Shapes
-
-# +
-from matplotlib.patches import Circle, Ellipse, Rectangle, Polygon
-from matplotlib.collections import PatchCollection
-
-# Fixing random state for reproducibility
-np.random.seed(19680801)
-
-
-kwargs1 = {}
-kwargs2 = {'facecolor': 'None',
-          'edgecolor': 'tab:red',
-          'linewidth': 5}
-kwargs3 = {'hatch': '*',
-          'fc': 'None'}
-kwargs3 = {'fc': 'greenyellow',
-          'alpha': 0.5}
-
-fig, ax = plt.subplots(figsize=(20, 10))
-
-# Rectangles: all patches have the same style 
-patch_list = []
-hr = 30
-wr = -20
-patch_list.append(Rectangle((wr + 2, hr), 1, 1))
-patch_list.append(Rectangle((wr + 6, hr), 2, 0.5))
-patch_list.append(Rectangle((wr + 12, hr), 2, 4))
-p = PatchCollection(patch_list, **kwargs1)
-ax.add_collection(p)
-
-# Polygon: all patches have the same style
-patch_list = []
-hr = 23
-wr = -20
-xor = [wr + i for i in [2, 6, 12]]
-radius = [1, 2, 3]
-for ind, nside in enumerate([3, 5, 7]):
-    points = [(xor[ind] + radius[ind]*np.cos(2*np.pi*i/nside),
-               hr + radius[ind]*np.sin(2*np.pi*i/nside))
-               for i in range(nside)]
-    patch_list.append(Polygon(points))
-p = PatchCollection(patch_list, **kwargs2)
-ax.add_collection(p)
-
-
-# Ellipse: all patches have the same style 
-patch_list = []
-hel = 30
-we = 0
-patch_list.append(Ellipse((we + 2, hel), 1, 2))
-patch_list.append(Ellipse([we + 6, hel], 2, 0.5))
-patch_list.append(Ellipse([we + 12, hel], 2, 4, angle=45))
-p = PatchCollection(patch_list, **kwargs3)
-ax.add_collection(p)
-
-# Circle: each patch is independent
-hc = 23
-wc = 0
-ax.add_patch(Circle([wc + 2, hc], 1, **kwargs1))
-ax.add_patch(Circle([wc + 6, hc], 2, **kwargs2))
-ax.add_patch(Circle([wc + 12, hc], 3, **kwargs3))
-
-ax.set_xlim(-20, 16)
-ax.set_ylim(18, 36)
-ax.set_aspect('equal')
-    
-# -
-
-# <a id=box_plot></a>
-# ## Box plots
-
-s1 = np.random.normal(size=100)
-s2 = np.random.uniform(size=100)
-s3 = np.random.exponential(size=100)
-plt.boxplot([s1, s2, s3], labels=['Normal', 'Uniform', 'Exponential']);
-
-# <a id=pie_chart></a>
-# ## Pie charts
-
-# +
-# Select data from a specific year and add it up
-year = 2023
-year_mask = df_daily.year == year
-dropped_columns = ['year', 'month', 'day', 'TotalGeneration']
-totals_year = (df_daily[year_mask].sum().drop(dropped_columns)/1000)
-
-# Get sorted renewable sources totals
-totals_renewable_all = totals_year[renewable].sort_values(ascending=False)
-totals_renewable = totals_renewable_all[:3]
-totals_renewable['OtherRenewables'] = totals_renewable_all[3:].sum()
-
-# Get sorted non-renewable sources totals
-totals_nonrenewable_all = totals_year[non_renewable].sort_values(ascending=False)
-totals_nonrenewable = totals_nonrenewable_all[:3]
-totals_nonrenewable['OtherNonRenewables'] = totals_nonrenewable_all[3:].sum()
-
-# Concatenate renewable and non renewable
-totals_summary = pd.concat([totals_renewable, totals_nonrenewable])
-totals_summary
-
-# +
-# Custom colors: renewable=green, non-renewable=red
-pie_colors = [(0, (i + 3)/7., 0, 0.7) for i in range(4)] + \
-    [((i + 3)/7., 0, 0, 0.7) for i in range(4)] #RGB color specification
-
-fig, ax = plt.subplots()
-ax.pie(totals_summary, labels=totals_summary.index, colors=pie_colors)
-ax.axis('equal');
-# -
-
-# <a id=3d_plots></a>
-# ## 3D Plots
-
-# +
-import mpl_toolkits.mplot3d.axes3d as p3
-x = np.linspace(0, 2 * np.pi, 120)
-y = np.linspace(0, 2 * np.pi, 120).reshape(-1, 1)
-z = np.sin(x) + np.cos(y)
-
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(x, y, z, cmap='viridis')
 # -
 
 # # Additional concepts
@@ -886,45 +496,6 @@ plt.savefig(plot_folder / 'awesome_plot.jpg', dpi=300)
 
 # absolute path
 # plt.savefig('/path/to/output/directory/awesome_plot.pdf')
-# -
-
-# <a id=animations></a>
-# ## Animations
-#
-# To run the examples you may have to install ffmpeg
-
-# Uncomment the line below and run the cell
-# !pip install ffmpeg-python
-
-# +
-import matplotlib.animation as animation
-
-class FunctionAnimatedImage():
-    
-    def func(self):
-        return np.sin(self.x) + np.cos(self.y)
-    
-    def __init__(self):
-        self.x = np.linspace(0, 2 * np.pi, 120)
-        self.y = np.linspace(0, 2 * np.pi, 120).reshape(-1, 1)
-
-        self.im = plt.imshow(self.func(), animated=True)
-        
-    def next_frame(self, i, *args):
-        
-        self.x += np.pi / 5.
-        self.y += np.pi / 20.
-        self.im.set_array(self.func())
-        return self.im,
-
-fig = plt.figure()
-anim_img = FunctionAnimatedImage()
-
-# Animate the image by recursively calling the next_frame function
-ani_1 = animation.FuncAnimation(fig, anim_img.next_frame, frames=40, interval=50, blit=True)
-
-# Embed the video in an html 5.0 video tag
-HTML(ani_1.to_html5_video())
 # -
 
 # # Alternative plotting libraries
