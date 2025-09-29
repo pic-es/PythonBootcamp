@@ -117,14 +117,11 @@ non_renewable = [
 # # Examples
 # ## Simple example
 
-# +
 from matplotlib import pyplot as plt
-
 plt.plot(
     df_monthly.date, # X axis
     df_monthly['SolarPhotovoltaic'] # Y axis
-);
-# -
+)
 
 # Although matplotlib is low level, it's already automating part of the work:
 # * scientific notation in y-axis
@@ -386,35 +383,6 @@ plt.tight_layout() # When doing multiple plots you should almost always use this
 # <a id=gridspec></a>
 # ## Using Gridspec
 
-# +
-# use gridspec to partition the figure into subplots
-import matplotlib.gridspec as gridspec
-
-fig = plt.figure()
-gspec = gridspec.GridSpec(3, 3) #, wspace=0.05, hspace=0.05)
-
-top_histogram = fig.add_subplot(gspec[0, 1:])
-side_histogram = fig.add_subplot(gspec[1:, 0])
-lower_right = fig.add_subplot(gspec[1:, 1:])
-
-# Data from daily energy generation
-X = df_daily['Wind']
-Y = df_daily['SolarPhotovoltaic']
-
-# Normed histograms counts add up to 1, they resemble a probability density function
-top_histogram.hist(X, bins=100, density=True)
-side_histogram.hist(Y, bins=100, orientation='horizontal', density=True)
-# flip the side histogram's x axis
-#side_histogram.invert_xaxis()
-lower_right.scatter(X, Y, alpha=0.5)
-
-# Remove the picks in-between
-#top_histogram.set_xticks([])
-#lower_right.set_yticks([])
-#top_histogram.set_yticks(top_histogram.get_yticks()[1:])
-#side_histogram.set_xticks(side_histogram.get_xticks()[1:]);
-# -
-
 # # Additional concepts
 #
 # ## Projections
@@ -565,76 +533,7 @@ plt.savefig(plot_folder / 'awesome_plot.jpg', dpi=300)
 # plt.savefig('/path/to/output/directory/awesome_plot.pdf')
 # -
 
-# # Alternative plotting libraries
-#
-# ## Seaborn
-#
-# High-level plotting library on top of maplotlib
-
-import seaborn as sns
-
-# +
-np.random.seed(1234)
-
-v1 = np.random.normal(0, 10, 1000)
-v2 = 2*v1 + np.random.normal(60, 15, 1000)
-# -
-
-# plot a kernel density estimation over a stacked barchart
-plt.figure()
-plt.hist([v1, v2], histtype='barstacked', density=True);
-v3 = np.concatenate((v1,v2))
-sns.kdeplot(v3);
-
-grid = sns.jointplot(x=v1, y=v2, alpha=0.4);
-#grid.ax_joint.set_aspect('equal')
-
-# And much more ... https://seaborn.pydata.org/
-
-# + [markdown] toc-hr-collapsed=true
-# ## Bokeh 
-#
-# Python library to produce interactive plots
-#
-# https://docs.bokeh.org/en/latest/index.html
-# -
-
-import numpy as np
-from bokeh.io import push_notebook, show, output_notebook
-from bokeh.models import HoverTool
-from bokeh.plotting import figure 
-output_notebook()
-
-# +
-N = 4000
-x = np.random.random(size=N) * 100
-y = np.random.random(size=N) * 100
-radii = np.random.random(size=N) * 1.5
-colors = np.array([(r, g, 150) for r, g in zip(50+2*x, 30+2*y)], dtype="uint8")
-
-TOOLS="hover,crosshair,pan,wheel_zoom,zoom_in,zoom_out,box_zoom,undo,redo,reset,tap,save,box_select,poly_select,lasso_select,examine,help"
-
-p = figure(tools=TOOLS)
-
-p.circle(x, y, radius=radii,
-          fill_color=colors, fill_alpha=0.6,
-          line_color=None)
-
-show(p, notebook_handle=True)
-# -
-
-# ## plotly
-#
-# https://plotly.com/python/
-
-import plotly.express as px
-df = px.data.iris()
-fig = px.scatter(df, x="sepal_width", y="sepal_length", color='petal_length')
-fig.show()
-
-# # Interactive plotting
-
-# ## with ipympl
+# ## Interactive plotting with ipympl
 #
 # By changing the backend ( %matplotlib inline -> %matplotlib ipympl ) . We will already have interactive exploration for free.
 #
@@ -648,11 +547,11 @@ fig.show()
 # To install ipympl uncomment the following line and run the cell
 # #!pip install ipympl
 # -
-
-
+# %matplotlib widget
 
 # +
-# One can bound figure attributes to other widget values.
+import matplotlib.pyplot as plt
+import numpy as np
 from ipywidgets import AppLayout, FloatSlider
 
 plt.ioff()
@@ -691,27 +590,74 @@ AppLayout(
     pane_heights=[0, 6, 1]
 )
 # -
-
-# <a id=exercise_3></a>
-# # Exercise 3
+# # Alternative plotting libraries
 #
-# Load the file `resources/nip.fits` using fits.
-# ```
-# hdul = fits.open('resources/nip.fits')
-# ```
+# ## Seaborn
 #
-# Plot the matrix in `hdul[1].data` with imshow. You won't see much.
-#
-# Do a histogram (Hint: use the `log` argument) to analyze the values in the matrix.
-#
-# Use imshow (with `norm`) to see what's inside the plot.
-#
-# Use `imshow` + `clim` to see a higher detail of the background.
-#
-# Put everything in a single figure mith multiple axes
+# Big set of predefined statistical plots
 
 # +
-# # %load -r 110-135 /home/torradeflot/Projects/PythonMasterIFAE/matplotlib/matplotlib_solutions.py
+import seaborn as sns
+
+g = sns.PairGrid(df_daily[['Wind', 'SolarPhotovoltaic', 'Nuclear']],
+                 diag_sharey=False)
+g.map_upper(sns.histplot)
+g.map_lower(sns.kdeplot)
+g.map_diag(sns.histplot)
+g.tick_params(labelsize=8, labelrotation=45)
 # -
+
+# And much more ... https://seaborn.pydata.org/
+
+# ## pandas
+#
+# Pandas has a number of built-in plotting methods that are very convenient when working with dataframes
+
+year_mask = df_monthly.year == 2023
+sel_cols = ['Wind', 'SolarPhotovoltaic', 'Nuclear', 'month']
+df_monthly[year_mask][sel_cols].plot.bar(x='month')
+
+# + [markdown] toc-hr-collapsed=true
+# ## Bokeh 
+#
+# Python library to produce interactive plots
+#
+# https://docs.bokeh.org/en/latest/index.html
+#
+# To be able to use it in a notebook you may have to install jupyter_bokeh and restart
+# -
+
+# !pip install jupyter_bokeh
+
+import numpy as np
+from bokeh.io import push_notebook, show, output_notebook
+from bokeh.models import HoverTool
+from bokeh.plotting import figure 
+output_notebook()
+
+# +
+N = 4000
+x = np.random.random(size=N) * 100
+y = np.random.random(size=N) * 100
+radii = np.random.random(size=N) * 5
+colors = np.array([(r, g, 150) for r, g in zip(50+2*x, 30+2*y)], dtype="uint8")
+
+p = figure()
+
+r1 = p.scatter(x, y, size=radii, color=colors)
+
+show(p, notebook_handle=True)
+# -
+
+# ## plotly
+#
+# https://plotly.com/python/
+
+import plotly.express as px
+df = px.data.iris()
+fig = px.scatter(df, x="sepal_width", y="sepal_length", color='petal_length')
+fig.show()
+
+
 
 
