@@ -117,10 +117,18 @@ non_renewable = [
 # # Examples
 # ## Simple example
 
+# +
+from matplotlib import pyplot as plt
+
 plt.plot(
     df_monthly.date, # X axis
     df_monthly['SolarPhotovoltaic'] # Y axis
 );
+# -
+
+# Although matplotlib is low level, it's already automating part of the work:
+# * scientific notation in y-axis
+# * year labels in the x-axis
 
 # ## Full example
 
@@ -293,14 +301,14 @@ plt.tight_layout()
 #
 # In order to introduce the OO API, it's convenient that we have some knowledge of matplotlib's architecture.
 #
-# The top-level matplotlib object that contains and manages all of the elements in a given graphic is called the **Figure**.
-#
 # To achieve the manipulation and rendering of this objects, matplotlib is structured in three layers:
 # * *Scripting Layer (pyplot)*: Light scripting interface we have alredy shown
 # * *Artist Layer*: Are the things that have to be plotted. The figure, lines, axis, bars, ...
 # * *Backend*: It's the one that actually draws the Artists on the canvas.
 #
 # ## Artists layer
+#
+# The top-level matplotlib object that contains and manages all of the elements in a given graphic is called the **Figure**.
 #
 # Everything you see in a plot is an Artist instance. This layer is a hierarchy of objects with the **Figure** sitting on top of it.
 #
@@ -332,7 +340,7 @@ ax.plot(df_monthly.date, df_monthly['SolarPhotovoltaic'])
 
 # Both APIs can be connected through the `pyplot.gcf` and `pyplot.gca` methods.
 
-# + jupyter={"outputs_hidden": true}
+# +
 x = np.arange(5)
 plt.plot(x, x)
 
@@ -359,9 +367,9 @@ plt.get_backend()
 # +
 sources_sample = random.sample(renewable + non_renewable, 9)
 
-# subplot arguments: # of rows, # of columns, plot index (row * (#cols) + col)
+fig = plt.figure()
 for i in range(9):
-    ax = plt.subplot(3, 3, i + 1) # the same as fig.add_subplot
+    ax = fig.add_subplot(3, 3, i + 1)
     x = df_monthly[sources_sample[i]]
     ax.plot(x)
     x_center = np.array(ax.get_xlim()).sum()/2
@@ -412,24 +420,83 @@ lower_right.scatter(X, Y, alpha=0.5)
 # ## Projections
 
 # +
-import matplotlib.gridspec as gridspec
+import numpy as np
+import matplotlib.pyplot as plt
 
-gs = gridspec.GridSpec(1, 3, wspace=0.5)
+# Set up the 3D plot
+fig = plt.figure(figsize=(10, 10))
 
-theta = np.linspace(0, 5*2*np.pi, 101)
-r = theta/2*np.pi
+# Define the parameters
+R = 10  # Radius of the sphere
+c = 15  # Constant for the spiral's tightness
+t = np.linspace(0, np.pi, 500) # Parameter t from 0 to pi
 
-fig = plt.figure(figsize=(16, 8))
+# Calculate the x, y, z coordinates of the spiral
+x = R * np.sin(t) * np.cos(c * t)
+y = R * np.sin(t) * np.sin(c * t)
+z = R * np.cos(t)
 
-ax1 = fig.add_subplot(gs[0], projection='polar')
-ax1.plot(theta, r)
+# Plot the spiral in 3D
+ax1 = fig.add_subplot(131, projection='3d')
+ax1.set_title('3D')
+ax1.plot(x, y, z) # cartesian coords
+ax1.set_xticks([])
+ax1.set_yticks([])
+ax1.set_zticks([])
+ax1.set_box_aspect([1, 1, 1])
 
-gaia_csv = os.path.join(path_to_the_repo, 'resources', 'GaiaDR2.csv')
-gaia_data = np.loadtxt(gaia_csv, delimiter=',', skiprows=11)
-ax2 = fig.add_subplot(gs[1:], projection='mollweide')
-ax2.scatter(np.deg2rad(gaia_data[:, 0]), np.deg2rad(gaia_data[:, 1]), alpha=0.3)
-ax2.grid()
+# Polar projection
+ax2 = fig.add_subplot(132, projection='polar')
+ax2.set_title('Polar')
+ax2.plot(c*t, np.sin(t)) # angle, radius
+ax2.set_xticks([])
+ax2.set_yticks([])
+ax2.set_theta_zero_location('N') # Set 0 degrees to the North (top)
+ax2.set_theta_direction(-1) # Clockwise direction
+ax2.grid(True)
 
+# Mollweide
+ax3 = fig.add_subplot(133, projection='mollweide')
+ax3.set_title('Mollweide')
+ax3.plot(np.mod(c*t, 2*np.pi) - np.pi, np.pi/2 - t)
+ax3.set_xticks([])
+ax3.set_yticks([]);
+
+# -
+
+# ## Colormaps
+#
+# Is essentially a function that maps values to colors
+#
+# https://matplotlib.org/stable/gallery/color/colormap_reference.html
+
+# +
+# Initialize a multivariate normal distribution
+from scipy import stats
+mult_mean = [0.1, 2.]
+mult_cov =  [[2.0, 0.3], [0.3, 0.5]]
+mult_norm = stats.multivariate_normal(mean=mult_mean, cov=mult_cov)
+
+XLIM = [-6., 6.]
+YLIM = [0., 4.]
+
+fig, axes = plt.subplots(1, 3, figsize=(16., 6.))
+
+# Make data.
+x = np.linspace(*XLIM, 100)
+y = np.linspace(*YLIM, 100)
+X, Y = np.meshgrid(x, y)
+pos = np.dstack((X, Y))
+Z = mult_norm.pdf(pos)
+
+# Contour plot of the PDF
+cmaps = ['viridis', 'coolwarm', 'gist_heat']
+for ax, cmap in zip(axes, cmaps):
+    ax.contourf(X, Y, Z, cmap=cmap)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    
+plt.tight_layout()
 # -
 
 # <a id=plot_styles></a>
